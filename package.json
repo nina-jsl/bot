@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^2.0.31",
+    "ai": "^5.0.98",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0"
