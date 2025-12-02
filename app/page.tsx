@@ -34,7 +34,7 @@ const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
     placeholder:
       "Paste your draft or describe what you’re trying to say to your PM...",
     example:
-      '“Here is my rough email to my PM about missing a deadline. Can you help me make it clearer and more professional?”',
+      "“Here is my rough email to my PM about missing a deadline. Can you help me make it clearer and more professional?”",
     accent: {
       pillBg: "bg-sky-500/15 dark:bg-sky-500/20",
       pillText: "text-sky-600 dark:text-sky-300",
@@ -48,7 +48,7 @@ const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
     tagline: "Asks tough but fair questions about your investment idea.",
     placeholder: "Describe your investment idea or thesis. Rough is okay...",
     example:
-      '“I’m thinking about pitching a long in a Chinese clean-tech company benefiting from EV adoption. Can you challenge my thesis like a PM would?”',
+      "“I’m thinking about pitching a long in a Chinese clean-tech company benefiting from EV adoption. Can you challenge my thesis like a PM would?”",
     accent: {
       pillBg: "bg-emerald-500/15 dark:bg-emerald-500/20",
       pillText: "text-emerald-600 dark:text-emerald-300",
@@ -77,7 +77,7 @@ const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
     placeholder:
       "Ask anything about being a junior analyst or working in asset management...",
     example:
-      '“I often feel lost in team meetings and don’t know when it’s okay to ask questions. How should a junior analyst behave so I don’t look clueless but still learn?”',
+      "“I often feel lost in team meetings and don’t know when it’s okay to ask questions. How should a junior analyst behave so I don’t look clueless but still learn?”",
     accent: {
       pillBg: "bg-violet-500/15 dark:bg-violet-500/20",
       pillText: "text-violet-600 dark:text-violet-300",
@@ -169,157 +169,136 @@ export default function HomePage() {
   }
 
   return (
-    <main className="h-screen flex flex-col bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* lock the whole app to one viewport height */}
-      {/* Top bar */}
-      <header className="h-12 border-b border-slate-200 bg-white/80 backdrop-blur-sm px-4 flex items-center justify-between dark:bg-slate-950/70 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-slate-900 text-slate-50 flex items-center justify-center text-xs font-semibold dark:bg-slate-50 dark:text-slate-900">
-            J
-          </div>
-          <span className="font-medium text-sm text-slate-900 dark:text-slate-50">
-            Junior Analyst Mentor
-          </span>
-        </div>
-        <span className="text-[11px] text-slate-500 dark:text-slate-400">
-          Groq + AI SDK
-        </span>
-      </header>
-
-      {/* Main area: this takes all remaining height */}
-      <div className="flex-1 flex justify-center items-stretch px-2 sm:px-4 lg:px-8 py-4">
-        {/* Chat card fills available height because of h-full */}
-        <section className="w-full max-w-5xl flex flex-col h-full rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-sm shadow-sm dark:bg-slate-950/80 dark:border-slate-800">
-          {/* Card header */}
-          <div
-            className={`px-4 pb-3 pt-3 border-b bg-gradient-to-b from-slate-50/80 to-transparent dark:from-white/5 dark:to-transparent ${currentConfig.accent.headerBorder}`}
-          >
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  Mentor Chat
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Mode-specific guidance with memory within each mode.
-                </p>
-              </div>
-              <div
-                className={`px-2 py-1 rounded-full text-[10px] font-medium border border-white/40 dark:border-white/20 ${currentConfig.accent.pillBg} ${currentConfig.accent.pillText}`}
-              >
-                {currentConfig.label}
-              </div>
+    <main className="h-screen w-screen flex justify-center items-stretch bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-2 sm:px-4 lg:px-8 py-4">
+      {/* Single full-height chat card */}
+      <section className="w-full max-w-5xl flex flex-col h-full rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-sm shadow-sm dark:bg-slate-950/80 dark:border-slate-800">
+        {/* Card header */}
+        <div
+          className={`px-4 pb-3 pt-3 border-b bg-gradient-to-b from-slate-50/80 to-transparent dark:from-white/5 dark:to-transparent ${currentConfig.accent.headerBorder}`}
+        >
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                Mentor Chat
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Mode-specific guidance with memory within each mode.
+              </p>
             </div>
-
-            {/* Mode selector */}
-            <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
-              {MODES.map((m) => {
-                const cfg = MODE_CONFIG[m];
-                const isActive = m === mode;
-                return (
-                  <button
-                    key={m}
-                    onClick={() => handleModeChange(m)}
-                    className={`px-2.5 py-1 rounded-full border whitespace-nowrap transition-all ${
-                      isActive
-                        ? "bg-slate-900 text-slate-50 border-slate-900 dark:bg-slate-50 dark:text-slate-900 dark:border-slate-50 shadow-sm"
-                        : "bg-transparent text-slate-600 border-slate-200 hover:border-slate-400 dark:text-slate-300 dark:border-slate-700 dark:hover:border-slate-500"
-                    }`}
-                  >
-                    {cfg.label}
-                  </button>
-                );
-              })}
+            <div
+              className={`px-2 py-1 rounded-full text-[10px] font-medium border border-white/40 dark:border-white/20 ${currentConfig.accent.pillBg} ${currentConfig.accent.pillText}`}
+            >
+              {currentConfig.label}
             </div>
-
-            <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-              {currentConfig.tagline}{" "}
-              {currentMessages.length > 0 &&
-                "You’re continuing your previous chat in this mode."}
-            </p>
           </div>
 
-          {/* Messages area: flex-1 + overflow-y-auto -> scrolls inside fixed-height card */}
-          <div className="flex-1 flex flex-col px-4 pt-3 pb-2 gap-2 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/40">
-            {currentMessages.length === 0 && (
-              <div className="mx-auto mt-6 max-w-[85%] text-center text-[11px] text-slate-500 dark:text-slate-400">
-                <p className="mb-2">Example to start with (click to insert):</p>
-                <button
-                  type="button"
-                  onClick={() => setInput(currentConfig.example)}
-                  className="italic underline-offset-2 hover:underline text-slate-700 dark:text-slate-200"
-                >
-                  {currentConfig.example}
-                </button>
-              </div>
-            )}
-
-            {currentMessages.map((m, idx) => {
-              const isUser = m.role === "user";
+          {/* Mode selector */}
+          <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
+            {MODES.map((m) => {
+              const cfg = MODE_CONFIG[m];
+              const isActive = m === mode;
               return (
-                <div
-                  key={idx}
-                  className={`flex w-full ${
-                    isUser ? "justify-end" : "justify-start"
+                <button
+                  key={m}
+                  onClick={() => handleModeChange(m)}
+                  className={`px-2.5 py-1 rounded-full border whitespace-nowrap transition-all ${
+                    isActive
+                      ? "bg-slate-900 text-slate-50 border-slate-900 dark:bg-slate-50 dark:text-slate-900 dark:border-slate-50 shadow-sm"
+                      : "bg-transparent text-slate-600 border-slate-200 hover:border-slate-400 dark:text-slate-300 dark:border-slate-700 dark:hover:border-slate-500"
                   }`}
                 >
-                  <div className="flex max-w-[80%] items-end gap-1">
-                    {!isUser && (
-                      <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-600 dark:text-slate-300 shrink-0">
-                        M
-                      </div>
-                    )}
-                    <div
-                      className={`rounded-2xl px-3 py-2 text-[13px] leading-snug shadow-sm whitespace-pre-wrap ${
-                        isUser
-                          ? `${currentConfig.accent.userBubbleBg} ${currentConfig.accent.userBubbleText} rounded-br-sm`
-                          : "bg-white text-slate-900 border border-slate-200 rounded-bl-sm dark:bg-slate-900/80 dark:text-slate-50 dark:border-slate-700"
-                      }`}
-                    >
-                      {m.content}
-                    </div>
-                  </div>
-                </div>
+                  {cfg.label}
+                </button>
               );
             })}
           </div>
 
-          {/* Input area */}
-          <div className="px-3 pb-3 pt-2 border-t border-slate-200/80 bg-slate-50/80 dark:bg-slate-950/80 dark:border-slate-800/80">
-            <div className="flex items-end gap-2">
-              <div className="flex-1 rounded-2xl bg-white border border-slate-200 px-3 py-1.5 flex flex-col shadow-sm dark:bg-slate-900 dark:border-slate-700">
-                <textarea
-                  className="w-full bg-transparent text-[13px] text-slate-900 placeholder:text-slate-400 resize-none outline-none max-h-40 min-h-[40px] dark:text-slate-50 dark:placeholder:text-slate-500"
-                  placeholder={currentConfig.placeholder}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                    Enter to send • Shift+Enter for new line
-                  </span>
-                  {errorMsg && (
-                    <span className="text-[10px] text-red-500">
-                      {errorMsg}
-                    </span>
-                  )}
-                </div>
-              </div>
+          <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+            {currentConfig.tagline}{" "}
+            {currentMessages.length > 0 &&
+              "You’re continuing your previous chat in this mode."}
+          </p>
+        </div>
+
+        {/* Messages area */}
+        <div className="flex-1 flex flex-col px-4 pt-3 pb-2 gap-2 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/40">
+          {currentMessages.length === 0 && (
+            <div className="mx-auto mt-6 max-w-[85%] text-center text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="mb-2">Example to start with (click to insert):</p>
               <button
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                className={`h-9 w-9 rounded-full flex items-center justify-center text-[13px] font-medium transition ${
-                  loading || !input.trim()
-                    ? "bg-slate-200 text-slate-500 cursor-default dark:bg-slate-800 dark:text-slate-500"
-                    : "bg-slate-900 text-white hover:bg-slate-800 active:scale-95 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
-                }`}
+                type="button"
+                onClick={() => setInput(currentConfig.example)}
+                className="italic underline-offset-2 hover:underline text-slate-700 dark:text-slate-200"
               >
-                {loading ? "…" : "↑"}
+                {currentConfig.example}
               </button>
             </div>
+          )}
+
+          {currentMessages.map((m, idx) => {
+            const isUser = m.role === "user";
+            return (
+              <div
+                key={idx}
+                className={`flex w-full ${
+                  isUser ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div className="flex max-w-[80%] items-end gap-1">
+                  {!isUser && (
+                    <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-600 dark:text-slate-300 shrink-0">
+                      M
+                    </div>
+                  )}
+                  <div
+                    className={`rounded-2xl px-3 py-2 text-[13px] leading-snug shadow-sm whitespace-pre-wrap ${
+                      isUser
+                        ? `${currentConfig.accent.userBubbleBg} ${currentConfig.accent.userBubbleText} rounded-br-sm`
+                        : "bg-white text-slate-900 border border-slate-200 rounded-bl-sm dark:bg-slate-900/80 dark:text-slate-50 dark:border-slate-700"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Input area */}
+        <div className="px-3 pb-3 pt-2 border-t border-slate-200/80 bg-slate-50/80 dark:bg-slate-950/80 dark:border-slate-800/80">
+          <div className="flex items-end gap-2">
+            <div className="flex-1 rounded-2xl bg-white border border-slate-200 px-3 py-1.5 flex flex-col shadow-sm dark:bg-slate-900 dark:border-slate-700">
+              <textarea
+                className="w-full bg-transparent text-[13px] text-slate-900 placeholder:text-slate-400 resize-none outline-none max-h-40 min-h-[40px] dark:text-slate-50 dark:placeholder:text-slate-500"
+                placeholder={currentConfig.placeholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  Enter to send • Shift+Enter for new line
+                </span>
+                {errorMsg && (
+                  <span className="text-[10px] text-red-500">{errorMsg}</span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              className={`h-9 w-9 rounded-full flex items-center justify-center text-[13px] font-medium transition ${
+                loading || !input.trim()
+                  ? "bg-slate-200 text-slate-500 cursor-default dark:bg-slate-800 dark:text-slate-500"
+                  : "bg-slate-900 text-white hover:bg-slate-800 active:scale-95 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
+              }`}
+            >
+              {loading ? "…" : "↑"}
+            </button>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }
