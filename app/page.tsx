@@ -126,7 +126,8 @@ const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
   workflow_helper: {
     label: "Workflow Helper",
     tagline: "Helps you prioritize tasks and structure your day or week.",
-    placeholder: "List your tasks, deadlines, and what you’re stressed about...",
+    placeholder:
+      "List your tasks, deadlines, and what you’re stressed about...",
     example:
       "“This week I have: 1) a sector deep-dive due Thursday, 2) daily news summaries, and 3) a case study presentation. How should I prioritize and what should I tell my PM if I can’t do everything perfectly?”",
     accent: {
@@ -190,6 +191,8 @@ export default function HomePage() {
   const [interactionCount, setInteractionCount] = useState(0);
   const [checkInPrompt, setCheckInPrompt] = useState<string | null>(null);
 
+  const [showPathModal, setShowPathModal] = useState(false);
+
   // Load path from localStorage or show overlay on first load
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -249,8 +252,7 @@ export default function HomePage() {
         setInteractionCount((prev) => {
           const next = prev + 1;
           if (skillsPath && next % 5 === 0) {
-            const focus =
-              skillsPath.steps[0]?.label ?? "your main focus area";
+            const focus = skillsPath.steps[0]?.label ?? "your main focus area";
             setCheckInPrompt(
               `Quick check-in on ${focus}: since we started, what has changed, and where are you still stuck?`
             );
@@ -340,12 +342,21 @@ export default function HomePage() {
           </p>
 
           {skillsPath && (
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-              <span className="font-semibold">Current 3-week path: </span>
-              {skillsPath.steps
-                .map((s) => `Week ${s.week} – ${s.label}`)
-                .join(" → ")}
-            </p>
+            <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="leading-snug">
+                <span className="font-semibold">Current 3-week path: </span>
+                {skillsPath.steps
+                  .map((s) => `Week ${s.week} – ${s.label}`)
+                  .join(" → ")}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowPathModal(true)}
+                className="shrink-0 rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-medium text-slate-600 hover:border-slate-500 hover:text-slate-800 dark:border-slate-600 dark:text-slate-200 dark:hover:border-slate-400"
+              >
+                View details
+              </button>
+            </div>
           )}
         </div>
 
@@ -498,6 +509,55 @@ export default function HomePage() {
                 onClick={handleSkillsSubmit}
               >
                 Generate path
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {skillsPath && showPathModal && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-lg dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  Your 3-week skills path
+                </h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Based on your self-check when you first opened the mentor.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPathModal(false)}
+                className="h-6 w-6 rounded-full border border-slate-200 text-[11px] text-slate-500 hover:border-slate-400 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              {skillsPath.steps.map((step) => (
+                <div
+                  key={step.week}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] dark:border-slate-700 dark:bg-slate-900/60"
+                >
+                  <p className="font-semibold text-slate-800 dark:text-slate-100">
+                    Week {step.week}: {step.label}
+                  </p>
+                  <p className="mt-1 text-slate-600 dark:text-slate-300">
+                    {step.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowPathModal(false)}
+                className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
+              >
+                Back to mentor
               </button>
             </div>
           </div>
