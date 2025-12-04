@@ -58,6 +58,42 @@ const SKILLS: { id: SkillId; label: string }[] = [
   { id: "time", label: "Time & workflow management" },
 ];
 
+type PreBriefScenario = "email_pm" | "ic_meeting" | "client_call" | "stock_pitch";
+
+type PreBriefConfig = {
+  label: string;
+  defaultMode: MentorMode;
+  intro: string;
+};
+
+const PREBRIEF_CONFIG: Record<PreBriefScenario, PreBriefConfig> = {
+  email_pm: {
+    label: "Email my PM",
+    defaultMode: "communication_coach",
+    intro:
+      "Okay, let’s get you ready to email your PM. Before you hit send, I want you clear on a few things:",
+  },
+  ic_meeting: {
+    label: "IC / investment committee",
+    defaultMode: "pm_simulator",
+    intro:
+      "IC prep mode. Let’s sharpen your story so you can walk into the room with a clear spine to your pitch:",
+  },
+  client_call: {
+    label: "Client call / update",
+    defaultMode: "communication_coach",
+    intro:
+      "Client call coming up. Let’s line up your message so you sound calm and in control:",
+  },
+  stock_pitch: {
+    label: "Stock pitch / idea review",
+    defaultMode: "pm_simulator",
+    intro:
+      "Pitching an idea. Let’s pressure-test the basics before you’re in front of anyone:",
+  },
+};
+
+
 // Generate a simple 3-week path; light personalization from the weakest skills
 function generateSkillsPath(scores: SkillsScores): SkillsPath {
   const sorted = Object.entries(scores).sort((a, b) => a[1] - b[1]); // lowest confidence first
@@ -193,6 +229,11 @@ export default function HomePage() {
 
   const [showPathModal, setShowPathModal] = useState(false);
 
+    // ---- Workflow-integrated learning state ----
+  const [showPreBriefMenu, setShowPreBriefMenu] = useState(false);
+  const [caseName, setCaseName] = useState<string | null>(null);
+
+
   // Load path from localStorage or show overlay on first load
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -289,6 +330,70 @@ export default function HomePage() {
       window.localStorage.setItem("jam_skills_path_v1", JSON.stringify(path));
     }
   }
+    function handlePreBrief(scenario: PreBriefScenario) {
+    const cfg = PREBRIEF_CONFIG[scenario];
+    const targetMode = cfg.defaultMode;
+
+    // Switch to the most relevant mode for this scenario
+    setMode(targetMode);
+    setShowPreBriefMenu(false);
+
+    const content = [
+      cfg.intro,
+      "",
+      "1) What is your main objective?",
+      '2) What would “success” look like here—for you and for your PM / client?',
+      "3) Any constraints or worries I should know about (timing, politics, data, confidence)?",
+      "",
+      "Answer in plain language; I’ll help you turn that into a clear ask or structure.",
+    ].join("\n");
+
+    setHistories((prev) => {
+      const prevMessages = prev[targetMode] ?? [];
+      return {
+        ...prev,
+        [targetMode]: [
+          ...prevMessages,
+          { role: "assistant", content } as ChatMessage,
+        ],
+      };
+    });
+  }
+
+  function handleAfterAction() {
+    const content = [
+      "Nice—sounds like something just finished.",
+      "",
+      "Let’s capture the learning while it’s still fresh:",
+      "1) What went well?",
+      "2) What felt uncomfortable or messy?",
+      "3) If you had to do this again next week, what would you do differently?",
+      "",
+      "Type your thoughts in a few bullet points. I’ll help you turn them into 2–3 “next time” rules you can reuse.",
+    ].join("\n");
+
+    setHistories((prev) => {
+      const msgs = prev[mode] ?? [];
+      return {
+        ...prev,
+        [mode]: [...msgs, { role: "assistant", content }],
+      };
+    });
+  }
+
+  function handleTagCase() {
+    if (typeof window === "undefined") return;
+    const name = window.prompt(
+      "Give this thread a short case name (e.g. “EV battery pitch”):",
+      caseName ?? ""
+    );
+    if (name && name.trim()) {
+      const trimmed = name.trim();
+      setCaseName(trimmed);
+      window.localStorage.setItem("jam_current_case_v1", trimmed);
+    }
+  }
+
 
   return (
     <main className="h-screen w-screen flex justify-center items-stretch bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-2 sm:px-4 lg:px-8 py-4">
@@ -423,7 +528,66 @@ export default function HomePage() {
         </div>
 
         {/* Input area */}
+                {/* Input area with pre-brief + after-action + case tag */}
         <div className="px-3 pb-3 pt-2 border-t border-slate-200/80 bg-slate-50/80 dark:bg-slate-950/80 dark:border-slate-800/80">
+          {/* Pre-brief / case tag / after-action row */}
+          <div className="mb-2 space-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowPreBriefMenu((v) => !v)}
+                  className="rounded-full border border-slate-300 bg-white px-2 py-0.5 font-medium text-slate-600 hover:border-slate-500 hover:text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-400"
+                >
+                  I’m about to…
+                </button>
+                <span className="text-slate-400 dark:text-slate-500">
+                  Pre-brief before emails, meetings, or pitches.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                {caseName && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                    Case: {caseName}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleTagCase}
+                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 font-medium text-slate-600 hover:border-slate-400 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                >
+                  Tag case
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAfterAction}
+                  className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-medium text-amber-800 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-100"
+                >
+                  After-action
+                </button>
+              </div>
+            </div>
+
+            {showPreBriefMenu && (
+              <div className="flex flex-wrap gap-1.5 text-[10px]">
+                {(Object.keys(PREBRIEF_CONFIG) as PreBriefScenario[]).map(
+                  (key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handlePreBrief(key)}
+                      className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-slate-600 hover:border-slate-400 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                    >
+                      {PREBRIEF_CONFIG[key].label}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Main input row */}
           <div className="flex items-end gap-2">
             <div className="flex-1 rounded-2xl bg-white border border-slate-200 px-3 py-1.5 flex flex-col shadow-sm dark:bg-slate-900 dark:border-slate-700">
               <textarea
@@ -455,6 +619,7 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+
       </section>
 
       {/* Skills path overlay */}
