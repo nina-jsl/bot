@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 
 type MentorMode =
   | "communication_coach"
@@ -26,6 +26,72 @@ type ModeConfig = {
     headerBorder: string;
   };
 };
+
+// ---- Skills-path types ----
+
+type SkillId = "data" | "modeling" | "communication" | "judgment" | "time";
+
+type SkillsScores = Record<SkillId, number>;
+
+type SkillsPathStep = {
+  week: number;
+  label: string;
+  description: string;
+};
+
+type SkillsPath = {
+  steps: SkillsPathStep[];
+  generatedAt: string;
+};
+
+const SKILLS: { id: SkillId; label: string }[] = [
+  { id: "data", label: "Data work (pulling, cleaning, basic analysis)" },
+  { id: "modeling", label: "Modeling (Excel, valuations, scenarios)" },
+  {
+    id: "communication",
+    label: "Communication (emails, IC notes, PM updates)",
+  },
+  {
+    id: "judgment",
+    label: "Investment judgment (sizing, catalysts, risk thinking)",
+  },
+  { id: "time", label: "Time & workflow management" },
+];
+
+// Generate a simple 3-week path; light personalization from the weakest skills
+function generateSkillsPath(scores: SkillsScores): SkillsPath {
+  const sorted = Object.entries(scores).sort((a, b) => a[1] - b[1]); // lowest confidence first
+  const weakestLabels = sorted
+    .slice(0, 2)
+    .map(([id]) => SKILLS.find((s) => s.id === id)?.label ?? id);
+
+  const steps: SkillsPathStep[] = [
+    {
+      week: 1,
+      label: "Communication Coach",
+      description: `Focus on communication and soft skills, especially around "${weakestLabels[0]}". Aim for ~3 real emails or updates this week using Communication Coach.`,
+    },
+    {
+      week: 2,
+      label: "PM Simulator",
+      description:
+        "Pick ONE investment idea and run 2 deeper PM Simulator sessions to pressure-test the thesis like an investment committee would.",
+    },
+    {
+      week: 3,
+      label: "Workflow Helper",
+      description:
+        "Use Workflow Helper to structure a full week: daily tasks, research blocks, and check-ins with your PM around that same idea.",
+    },
+  ];
+
+  return {
+    steps,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+// ---- Mode config (same as before) ----
 
 const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
   communication_coach: {
@@ -109,6 +175,38 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // ---- Skills path state ----
+  const [showSkillsOverlay, setShowSkillsOverlay] = useState(false);
+  const [skillScores, setSkillScores] = useState<SkillsScores>({
+    data: 3,
+    modeling: 3,
+    communication: 3,
+    judgment: 3,
+    time: 3,
+  });
+  const [skillsPath, setSkillsPath] = useState<SkillsPath | null>(null);
+
+  // interaction counter for check-ins
+  const [interactionCount, setInteractionCount] = useState(0);
+  const [checkInPrompt, setCheckInPrompt] = useState<string | null>(null);
+
+  // Load path from localStorage or show overlay on first load
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("jam_skills_path_v1");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as SkillsPath;
+        setSkillsPath(parsed);
+      } catch {
+        // ignore parse error, show overlay
+        setShowSkillsOverlay(true);
+      }
+    } else {
+      setShowSkillsOverlay(true);
+    }
+  }, []);
+
   const currentConfig = MODE_CONFIG[mode];
   const currentMessages = histories[mode] || [];
 
@@ -146,6 +244,19 @@ export default function HomePage() {
           ...prev,
           [mode]: [...newHistory, reply],
         }));
+
+        // bump interaction count after a successful exchange
+        setInteractionCount((prev) => {
+          const next = prev + 1;
+          if (skillsPath && next % 5 === 0) {
+            const focus =
+              skillsPath.steps[0]?.label ?? "your main focus area";
+            setCheckInPrompt(
+              `Quick check-in on ${focus}: since we started, what has changed, and where are you still stuck?`
+            );
+          }
+          return next;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -166,6 +277,15 @@ export default function HomePage() {
     if (newMode === mode) return;
     setMode(newMode);
     setErrorMsg("");
+  }
+
+  function handleSkillsSubmit() {
+    const path = generateSkillsPath(skillScores);
+    setSkillsPath(path);
+    setShowSkillsOverlay(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("jam_skills_path_v1", JSON.stringify(path));
+    }
   }
 
   return (
@@ -218,11 +338,37 @@ export default function HomePage() {
             {currentMessages.length > 0 &&
               "You’re continuing your previous chat in this mode."}
           </p>
+
+          {skillsPath && (
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+              <span className="font-semibold">Current 3-week path: </span>
+              {skillsPath.steps
+                .map((s) => `Week ${s.week} – ${s.label}`)
+                .join(" → ")}
+            </p>
+          )}
         </div>
 
         {/* Messages area */}
         <div className="flex-1 flex flex-col px-4 pt-3 pb-2 gap-2 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/40">
-          {currentMessages.length === 0 && (
+          {checkInPrompt && (
+            <div className="mx-auto mb-2 max-w-[85%] rounded-2xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-900 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-50">
+              <p className="font-medium mb-1">Skills path check-in</p>
+              <p className="mb-1">{checkInPrompt}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setInput(checkInPrompt);
+                  setCheckInPrompt(null);
+                }}
+                className="rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-amber-700 dark:bg-amber-400 dark:text-black"
+              >
+                Ask this to the mentor
+              </button>
+            </div>
+          )}
+
+          {currentMessages.length === 0 && !checkInPrompt && (
             <div className="mx-auto mt-6 max-w-[85%] text-center text-[11px] text-slate-500 dark:text-slate-400">
               <p className="mb-2">Example to start with (click to insert):</p>
               <button
@@ -299,6 +445,64 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Skills path overlay */}
+      {showSkillsOverlay && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-lg dark:bg-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              Set up your skills path
+            </h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              In 1 minute, tell me where you feel strong or weak. I’ll suggest a
+              3-week focus path that fits junior research analysts.
+            </p>
+
+            <div className="mt-3 space-y-3">
+              {SKILLS.map((s) => (
+                <div key={s.id} className="space-y-1">
+                  <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300">
+                    <span>{s.label}</span>
+                    <span>{skillScores[s.id]}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    value={skillScores[s.id]}
+                    onChange={(e) =>
+                      setSkillScores((prev) => ({
+                        ...prev,
+                        [s.id]: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                    <span>Not confident</span>
+                    <span>Very confident</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="text-xs text-slate-500 hover:underline dark:text-slate-400"
+                onClick={() => setShowSkillsOverlay(false)}
+              >
+                Skip for now
+              </button>
+              <button
+                className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
+                onClick={handleSkillsSubmit}
+              >
+                Generate path
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
