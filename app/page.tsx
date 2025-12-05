@@ -58,7 +58,11 @@ const SKILLS: { id: SkillId; label: string }[] = [
   { id: "time", label: "Time & workflow management" },
 ];
 
-type PreBriefScenario = "email_pm" | "ic_meeting" | "client_call" | "stock_pitch";
+type PreBriefScenario =
+  | "email_pm"
+  | "ic_meeting"
+  | "client_call"
+  | "stock_pitch";
 
 type PreBriefConfig = {
   label: string;
@@ -92,7 +96,6 @@ const PREBRIEF_CONFIG: Record<PreBriefScenario, PreBriefConfig> = {
       "Pitching an idea. Let’s pressure-test the basics before you’re in front of anyone:",
   },
 };
-
 
 // Generate a simple 3-week path; light personalization from the weakest skills
 function generateSkillsPath(scores: SkillsScores): SkillsPath {
@@ -175,12 +178,12 @@ const MODE_CONFIG: Record<MentorMode, ModeConfig> = {
     },
   },
   safe_qa: {
-    label: "Safe Q&A",
-    tagline: "Ask about culture, expectations, and soft skills at work.",
+    label: "Psych-Safe Q&A",
+    tagline: "Ask what you’re afraid to ask in real life.",
     placeholder:
-      "Ask anything about being a junior analyst or working in asset management...",
+      "Tell me what you’re worried about asking your PM/colleague, and where you’re stuck...",
     example:
-      "“I often feel lost in team meetings and don’t know when it’s okay to ask questions. How should a junior analyst behave so I don’t look clueless but still learn?”",
+      "“In meetings I’m scared to speak up because I feel dumb. How do I ask basic questions without looking clueless?”",
     accent: {
       pillBg: "bg-violet-500/15 dark:bg-violet-500/20",
       pillText: "text-violet-600 dark:text-violet-300",
@@ -211,6 +214,7 @@ export default function HomePage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [pmLens, setPmLens] = useState(false);
 
   // ---- Skills path state ----
   const [showSkillsOverlay, setShowSkillsOverlay] = useState(false);
@@ -229,10 +233,9 @@ export default function HomePage() {
 
   const [showPathModal, setShowPathModal] = useState(false);
 
-    // ---- Workflow-integrated learning state ----
+  // ---- Workflow-integrated learning state ----
   const [showPreBriefMenu, setShowPreBriefMenu] = useState(false);
   const [caseName, setCaseName] = useState<string | null>(null);
-
 
   // Load path from localStorage or show overlay on first load
   useEffect(() => {
@@ -273,7 +276,12 @@ export default function HomePage() {
       const res = await fetch("/api/mentor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, messages: newHistory }),
+        body: JSON.stringify({
+          mode,
+          messages: newHistory,
+          caseTag: caseName,
+          pmLens,
+        }),
       });
 
       const data = await res.json();
@@ -330,7 +338,7 @@ export default function HomePage() {
       window.localStorage.setItem("jam_skills_path_v1", JSON.stringify(path));
     }
   }
-    function handlePreBrief(scenario: PreBriefScenario) {
+  function handlePreBrief(scenario: PreBriefScenario) {
     const cfg = PREBRIEF_CONFIG[scenario];
     const targetMode = cfg.defaultMode;
 
@@ -342,7 +350,7 @@ export default function HomePage() {
       cfg.intro,
       "",
       "1) What is your main objective?",
-      '2) What would “success” look like here—for you and for your PM / client?',
+      "2) What would “success” look like here—for you and for your PM / client?",
       "3) Any constraints or worries I should know about (timing, politics, data, confidence)?",
       "",
       "Answer in plain language; I’ll help you turn that into a clear ask or structure.",
@@ -393,7 +401,6 @@ export default function HomePage() {
       window.localStorage.setItem("jam_current_case_v1", trimmed);
     }
   }
-
 
   return (
     <main className="h-screen w-screen flex justify-center items-stretch bg-slate-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-2 sm:px-4 lg:px-8 py-4">
@@ -528,7 +535,7 @@ export default function HomePage() {
         </div>
 
         {/* Input area */}
-                {/* Input area with pre-brief + after-action + case tag */}
+        {/* Input area with pre-brief + after-action + case tag */}
         <div className="px-3 pb-3 pt-2 border-t border-slate-200/80 bg-slate-50/80 dark:bg-slate-950/80 dark:border-slate-800/80">
           {/* Pre-brief / case tag / after-action row */}
           <div className="mb-2 space-y-1">
@@ -585,6 +592,36 @@ export default function HomePage() {
                 )}
               </div>
             )}
+
+            <div className="flex items-center justify-end gap-2 text-[10px] mt-1">
+              <span className="text-slate-400 dark:text-slate-500">
+                Perspective:
+              </span>
+              <div className="inline-flex rounded-full border border-slate-200 bg-white p-0.5 text-[10px] dark:border-slate-700 dark:bg-slate-900">
+                <button
+                  type="button"
+                  onClick={() => setPmLens(false)}
+                  className={`px-2 py-0.5 rounded-full ${
+                    !pmLens
+                      ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900"
+                      : "text-slate-500 dark:text-slate-300"
+                  }`}
+                >
+                  Junior view
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPmLens(true)}
+                  className={`px-2 py-0.5 rounded-full ${
+                    pmLens
+                      ? "bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900"
+                      : "text-slate-500 dark:text-slate-300"
+                  }`}
+                >
+                  PM view
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Main input row */}
@@ -619,7 +656,6 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-
       </section>
 
       {/* Skills path overlay */}
